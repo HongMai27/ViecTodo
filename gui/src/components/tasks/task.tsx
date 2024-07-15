@@ -12,6 +12,7 @@ type TaskProps = {
   categories: ICategory[];
 };
 
+
 const Task: React.FC<TaskProps> = ({ task, categories }) => {
   const navigation = useNavigation<HomeScreenNavigationType>();
 

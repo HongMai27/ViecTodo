@@ -1,6 +1,6 @@
 import { format, isToday } from "date-fns"
 import React, { useState } from "react"
-import { FlatList, Pressable, TextInput, View } from "react-native"
+import { FlatList, Modal, Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native"
 import { Calendar } from "react-native-calendars"
 import useSWR, { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
@@ -9,9 +9,16 @@ import { ICategory, ITaskRequest } from "../../types"
 import axiosInstance, { fetcher } from "../../services/config"
 import { BottomModal, ModalContent, ModalTitle, SlideAnimation, ModalPortal } from 'react-native-modals';
 import { Box, Text } from "../../utils/theme"
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { Picker } from "@react-native-picker/picker"
+import { Dropdown } from "react-native-element-dropdown"
+import Button from "../shared/button"
+
 
 type TaskActionsProps = {
-  categoryId: string
+  categoryId: string;
+  isModalVisible: boolean;
+  setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const today = new Date()
@@ -33,9 +40,10 @@ const createTaskRequest = async (
   }
 }
 
-const TaskActions = ({ categoryId }: TaskActionsProps) => {
-  const [isModalVisible, setModalVisible] = useState<boolean>(false);
-
+const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskActionsProps) => {
+  const [isSelectingStartDate, setIsSelectingStartDate] = useState(false);
+  const [isSelectingEndDate, setIsSelectingEndDate] = useState(false);
+  const [isSelectingDate, setIsSelectingDate] = useState<boolean>(false)
   const [newTask, setNewTask] = useState<ITaskRequest>({
     categoryId: categoryId,
     date: todaysISODate.toISOString(),
@@ -44,9 +52,6 @@ const TaskActions = ({ categoryId }: TaskActionsProps) => {
   })
 
   const { data, trigger } = useSWRMutation("tasks/create", createTaskRequest)
-
-  const [isSelectingCategory, setIsSelectingCategory] = useState<boolean>(false)
-  const [isSelectingDate, setIsSelectingDate] = useState<boolean>(false)
 
   const { data: categories, isLoading } = useSWR<ICategory[]>(
     "categories",
@@ -58,10 +63,12 @@ const TaskActions = ({ categoryId }: TaskActionsProps) => {
   if (isLoading || !categories) {
     return <Loader />
   }
+ 
 
-  const selectedCategory = categories?.find(
-    (_category) => _category._id === newTask.categoryId
-  )
+  const dropdownItems = categories.map((category) => ({
+    label: category.name,
+    value: category._id,
+  }));
 
 
   const onCreateTask = async () => {
@@ -86,140 +93,66 @@ const TaskActions = ({ categoryId }: TaskActionsProps) => {
   }
 
   return (
-    <Box flexDirection="row" justifyContent="center" paddingHorizontal="4" paddingVertical="1">
-      <Box
-        bg="fuchsia100"
-        p="4"
-        borderRadius="rounded-2xl"
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <TextInput
-          placeholder="Create a new task"
-          style={{
-            paddingVertical: 8,
-            paddingHorizontal: 8,
-            fontSize: 16,
-            width: "50%",
-          }}
-          maxLength={30}
-          textAlignVertical="center"
-          value={newTask.name}
-          onChangeText={(text) => {
-            setNewTask((prev) => {
-              return {
-                ...prev,
-                name: text,
-              }
-            })
-          }}
-          onSubmitEditing={onCreateTask}
-        />
-        <Box flexDirection="row" alignItems="center">
-          <Pressable
-            onPress={() => {
-              setIsSelectingDate((prev) => !prev)
+    <BottomModal
+      onSwipeOut={() => setModalVisible(!isModalVisible)}
+      swipeDirection={["up", "down"]}
+      swipeThreshold={200}
+      modalTitle={<ModalTitle title="Thêm công việc cần làm mới" />}
+      modalAnimation={
+        new SlideAnimation({
+          slideFrom: "bottom",
+        })
+      }
+      visible={isModalVisible}
+      onTouchOutside={() => setModalVisible(!isModalVisible)}
+    >
+      <ModalContent style={{ width: "100%", height: 230 }}>
+        <View style={{ marginVertical: 10, justifyContent:'space-around' }}>
+          <TextInput
+            placeholder='Tên công việc'
+            value={newTask.name}
+            onChangeText={(text) => {
+              setNewTask((prev) => {
+                return {
+                  ...prev,
+                  name: text,
+                };
+              });
             }}
-          >
-            <Box
-              flexDirection="row"
-              alignContent="center"
-              bg="purple1000"
-              p="2"
-              borderRadius="rounded-xl"
-            >
-              <Text>
+            style={styles.textInput}
+          />
+    <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'space-around', marginVertical: 10}}>
+          <Pressable onPress={() => {
+              setIsSelectingDate((prev) => !prev)
+            }}>
+             <Text style={[styles.textInput, {width:160}]}>
                 {isToday(new Date(newTask.date))
                   ? "Today"
                   : format(new Date(newTask.date), "MMM-dd")}
               </Text>
-            </Box>
           </Pressable>
-          <Box width={12} />
-          <Pressable
-            onPress={() => {
-              setIsSelectingCategory((prev) => !prev)
-            }}
-          >
-            <Box
-              bg="purple1000"
-              flexDirection="row"
-              alignItems="center"
-              p="2"
-              borderRadius="rounded-xl"
-            >
-              <Box
-                width={12}
-                height={12}
-                borderRadius="rounded"
-                borderWidth={2}
-                mr="1"
-                style={{
-                  borderColor: selectedCategory?.color.code,
-                }}
-              ></Box>
-              <Text
-                style={{
-                  color: selectedCategory?.color.code,
-                }}
-              >
-                {selectedCategory?.name || "Categories"}
-              </Text>
-            </Box>
-          </Pressable>
-        </Box>
-      </Box>
-      {isSelectingCategory && (
-        <Box alignItems="flex-end" my="4" justifyContent="flex-end">
-          <FlatList
-            data={categories}
-            renderItem={({ item, index }) => {
-              return (
-                <Pressable
-                  onPress={() => {
-                    setNewTask((prev) => {
-                      return {
-                        ...prev,
-                        categoryId: item._id,
-                      }
-                    })
-                    setIsSelectingCategory(false)
-                  }}
-                >
-                  <Box
-                    bg="gray250"
-                    p="2"
-                    borderTopStartRadius={index === 0 ? "rounded-3xl" : "none"}
-                    borderTopEndRadius={index === 0 ? "rounded-3xl" : "none"}
-                    borderBottomStartRadius={
-                      categories?.length - 1 === index ? "rounded-2xl" : "none"
-                    }
-                    borderBottomEndRadius={
-                      categories?.length - 1 === index ? "rounded-2xl" : "none"
-                    }
-                  >
-                    <Box flexDirection="row">
-                      <Text>{item.icon.symbol}</Text>
-                      <Text
-                        ml="2"
-                        fontWeight={
-                          newTask.categoryId === item._id ? "700" : "400"
-                        }
-                      >
-                        {item.name}
-                      </Text>
-                    </Box>
-                  </Box>
-                </Pressable>
-              )
-            }}
-          />
-               
-        </Box>
-      )}
-      {isSelectingDate && (
-        <Box>
+          <Dropdown
+              style={[styles.dropdown]}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              data={dropdownItems}
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder='Danh mục'
+              value={newTask.categoryId}
+              onChange={item => {
+                setNewTask(prev => ({ ...prev, categoryId: item.value }));
+              }}
+            />
+          </View>
+          <Button  label='Thêm' onPress={onCreateTask}/>
+        </View>
+       
+         {isSelectingDate && (
+        <Modal transparent={true}  animationType="slide">
+        <View style={styles.overlay}>
+          <Box style={styles.modalContent}>
           <Calendar
             minDate={format(today, "y-MM-dd")}
             onDayPress={(day: { dateString: string | number | Date }) => {
@@ -234,9 +167,49 @@ const TaskActions = ({ categoryId }: TaskActionsProps) => {
             }}
           />
         </Box>
+        </View>
+      </Modal>
       )}
-    </Box>
+      </ModalContent>
+    </BottomModal>
   )
 }
 
+const styles = StyleSheet.create ({
+ 
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textInput: {
+    padding: 10, 
+    borderColor: "#A1A1A1", 
+    borderWidth: 1, 
+    borderRadius: 5
+  },
+
+  dropdown: {
+    height: 40,
+    width: 200,
+    borderColor: "#A1A1A1",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginVertical: 5,
+  },
+  placeholderStyle: {
+    color: '#A1A1A1',
+  },
+  selectedTextStyle: {
+    color: '#000',
+  },
+})
 export default TaskActions

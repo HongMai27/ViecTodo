@@ -6,6 +6,7 @@ import TodayScreen from "../screens/today-screen";
 import CategoriesScreen from "../screens/categories-screen";
 import Icons from "../components/shared/icons";
 import { useTheme } from "@shopify/restyle";
+import CategoriesStackNavigator from "./categories-stack-navigator";
 
 
 
@@ -44,7 +45,7 @@ const BottomTabNavigator = () => {
         })
         }
         />
-        <Tab.Screen name="CategoriesStack" component={CategoriesScreen}
+        <Tab.Screen name="CategoriesStack" component={CategoriesStackNavigator}
         options={() =>({
             title: 'Danh mục',
             tabBarIcon:({color})=> <Icons name="categories" color={color}/>,

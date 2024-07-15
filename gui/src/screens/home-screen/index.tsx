@@ -32,10 +32,10 @@ const HomeScreen: React.FC = () => {
   const [selectedStartDate, setSelectedStartDate] = useState('');
   const [selectedEndDate, setSelectedEndDate] = useState('');
 
+  const [isModalVisible, setModalVisible] = useState(false);
 
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [filteredTasks, setFilteredTasks] = useState<ITask[]>([]);
-  const [isModalVisible, setModalVisible] = useState<boolean>(false);
   const [toDo, setTodo] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [deadline, setDeadline] = useState<Date>(new Date());
@@ -229,12 +229,19 @@ const HomeScreen: React.FC = () => {
           ]}>
             <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>Chưa hoàn thành</Text>
           </Pressable>
-          <Pressable onPress={() => setModalVisible(!isModalVisible)} style={{right:-10}}>
-            <Icon name="plus-circle" size={30} color="#EB91FF" />
-          </Pressable>
+          <Pressable onPress={() => setModalVisible(!isModalVisible)} style={{ right: -10 }}>
+        <Icon name="plus-circle" size={30} color="#EB91FF" />
+      </Pressable>
+      <Box height={10} />
+      {/* Truyền trạng thái isModalVisible và hàm setModalVisible vào TaskActions */}
+      <TaskActions
+        categoryId=""
+        isModalVisible={isModalVisible}
+        setModalVisible={setModalVisible}
+      />
+
         </View>
         <Box height={10} />
-        <TaskActions categoryId="" />
         <Box height={10} />
       <Box flex={1} px="4">
       {data.length > 0 ? (
@@ -274,37 +281,7 @@ const HomeScreen: React.FC = () => {
         </View>
       )}
       </Box>
-      <BottomModal //Add Task
-          onSwipeOut={() => setModalVisible(!isModalVisible)}
-          swipeDirection={["up", "down"]}
-          swipeThreshold={200}
-          modalTitle={<ModalTitle title="Thêm công việc cần làm mới" />}
-          modalAnimation={
-            new SlideAnimation({
-              slideFrom: "bottom",
-            })
-          }
-          visible={isModalVisible}
-          onTouchOutside={() => setModalVisible(!isModalVisible)}
-        >
-          <ModalContent style={{ width: "100%", height: 280 }}>
-            <View style={{marginVertical:10}}>
-              <TextInput 
-                placeholder='Name'
-                value={taskName}
-                onChangeText={setTaskName}
-                style={{padding:10, borderColor:"#A1A1A1", borderWidth:1, borderRadius:5}}
-              />
-            </View>
-
-
-            <Pressable onPress={handleCreate}
-              style={styles.submitButton}
-            >
-              <Icon name="chevron-circle-right" color="#e884f5" size={40} />
-            </Pressable>
-          </ModalContent>
-        </BottomModal>
+     
       <ModalPortal />
     </SafeAreaWrapper>
   );
