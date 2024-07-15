@@ -10,7 +10,7 @@ import SafeAreaWrapper from "../../components/shared/safe-area-wrapper"
 import { Box, Text } from "../../utils/theme"
 import NavigateBack from "../../navigation/navigate-back"
 import TaskActions from "../../components/tasks/task-action"
-import TaskBink from "../../components/tasks/task-bink"
+import TaskBink from "../../components/tasks/task"
 
 type CategoryScreenRouteProp = RouteProp<CategoriesStackParamList, "Category">
 

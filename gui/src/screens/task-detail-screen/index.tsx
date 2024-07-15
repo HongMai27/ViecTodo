@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Touchable, Modal } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { ICategory, ITask, ParamList } from '../../types'; 
+import { ICategory, ITask, ITaskRequest, ParamList } from '../../types'; 
 import { format } from 'date-fns';
 import Button from '../../components/shared/button';
 import { TextInput, TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
@@ -14,6 +14,9 @@ import SafeAreaWrapper from '../../components/shared/safe-area-wrapper';
 import { Calendar } from 'react-native-calendars';
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import useSWR, { mutate, useSWRConfig } from 'swr';
+import useSWRMutation from 'swr/dist/mutation';
+import { Dropdown } from 'react-native-element-dropdown';
 
 
 type TaskDetailScreenRouteProp = RouteProp<ParamList, 'TaskDetail'>;
@@ -23,35 +26,58 @@ type Props = {
   route: TaskDetailScreenRouteProp;
   navigation: TaskDetailScreenNavigationProp;
 };
+export const today = new Date();
+export const todaysISODate = new Date(today).setHours(0, 0, 0, 0);
 
+const updateTaskRequest = async (url: string, { arg }: { arg: ITaskRequest }) => {
+  try {
+    await axiosInstance.put(url, arg);
+  } catch (error) {
+    console.error("error in updateTaskRequest", error);
+    throw error;
+  }
+};
 const TaskDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   
   const [taskName, setTaskName] = useState('');
   const { task, categories } = route.params;
+  const [isSelectingDate, setIsSelectingDate] = useState<boolean>(false);
+ 
+  const { mutate } = useSWRConfig();
+
   const [isSelectingStartDate, setIsSelectingStartDate] = useState(false);
   const [isSelectingEndDate, setIsSelectingEndDate] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(new Date(task.createdAt));
   const [selectedEndDate, setSelectedEndDate] = useState(new Date(task.date));
   const [taskStatus, setTaskStatus] = useState(task.isCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành');
   const [selectedCategory, setSelectedCategory] = useState('');
-
-  const formattedStartDate = format(selectedStartDate, 'dd/MM/yyyy');
+  // const { trigger } = useSWRMutation("tasks/edit", updateTaskRequest)
+  const [updatedTask, setUpdatedTask] = useState(task)
+    const formattedStartDate = format(selectedStartDate, 'dd/MM/yyyy');
   const formattedEndDate = format(selectedEndDate, 'dd/MM/yyyy');
   const category = categories.find(cat => cat._id === task.categoryId);
   
   const statusOptions = ['Đã hoàn thành', 'Chưa hoàn thành'];
+  useEffect(() => {
+    if (task) {
+      setTaskName(task.name);
+      setSelectedStartDate(new Date(task.createdAt));
+      setSelectedEndDate(new Date(task.date));
+      setSelectedCategory(task.categoryId);
+      setTaskStatus(task.isCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành');
+    }
+  }, [task]);
 
+  const { trigger } = useSWRMutation(`tasks/edit/${task._id}`, updateTaskRequest);
+  const dropdownItems = categories.map((category) => ({
+    label: category.name,
+    value: category._id,
+  }));
   const handleStatusChange = (itemValue) => {
     setTaskStatus(itemValue);
-    // Thực hiện các hành động khác nếu cần thiết
   };
   const { goBack } = useNavigation();
-//   const goEditTask = () =>{
-//       navigation.navigate('EditTask', {task, categories})
-//     }
-//   const category = categories.find(cat => cat._id === task.categoryId);
-  // const formattedDate = task ? format(new Date(task.date), 'dd/MM/yyyy') : '';
-  // const formattedDateEnd = task ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '';
+
   const openStartDatePicker = () => {
     setIsSelectingStartDate(true);
   };
@@ -155,6 +181,20 @@ const TaskDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       console.error('Error updating task:', error);
     }
   };
+  
+  const updateTask = async () => {
+    try {
+      if (updateTask.name.length.toString().trim().length > 0) {
+        await trigger({ ...updatedTask })
+        await mutate("tasks/")
+        navigation.goBack()
+      }
+    } catch (error) {
+      console.log("error in updateTask", error)
+      throw error
+    }
+  }
+  
   return (
     <SafeAreaWrapper>
 
@@ -196,17 +236,23 @@ const TaskDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             <Pressable  onPress={openEndDatePicker}>
               <Text style={styles.input}>{formattedEndDate}</Text>
             </Pressable>
-            <Picker
-                selectedValue={selectedCategory}
-                onValueChange={(itemValue, itemIndex) => setSelectedCategory(itemValue)}
-                style={[styles.picker]}
-              >
-                {categories.map(cat => (
-                  <Picker.Item key={cat._id} label={cat.name} value={cat.name} />
-                ))}
-              </Picker>
+            <Dropdown
+              style={[styles.dropdown]}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              data={dropdownItems}
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder={category.name}
+              value={selectedCategory}
+              onChange={item => {
+                setSelectedCategory(item.value);
+              }}
+            />
+           
 
-            <Picker
+            {/* <Picker
                 selectedValue={taskStatus}
                 onValueChange={(itemValue) => handleStatusChange(itemValue)}
                 style={[styles.picker]}
@@ -214,7 +260,7 @@ const TaskDetailScreen: React.FC<Props> = ({ route, navigation }) => {
               {statusOptions.map((option, index) => (
                 <Picker.Item key={index} label={option} value={option} />
               ))}
-            </Picker>
+            </Picker> */}
           </View>
         </View>
       </View>
@@ -273,7 +319,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         fontSize:16,
         textAlign:'center',
-        width: '200%',
+        width: '100%',
         justifyContent:'center'
       },
       iconContainer: {
@@ -308,6 +354,20 @@ const styles = StyleSheet.create({
         textAlign:'center',
         width: '200%',
     
-      }
+      },
+      dropdown: {
+        height: 40,
+        width: 200,
+        borderColor: "#A1A1A1",
+        borderWidth: 1,
+        borderRadius: 5,
+        marginVertical: 5,
+      },
+      placeholderStyle: {
+        color: '#A1A1A1',
+      },
+      selectedTextStyle: {
+        color: '#000',
+      },
 
 })

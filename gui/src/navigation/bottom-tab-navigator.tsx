@@ -7,6 +7,7 @@ import CategoriesScreen from "../screens/categories-screen";
 import Icons from "../components/shared/icons";
 import { useTheme } from "@shopify/restyle";
 import CategoriesStackNavigator from "./categories-stack-navigator";
+import TaskCalendarScreen from "../screens/task-calendar-screen";
 
 
 
@@ -31,12 +32,21 @@ const BottomTabNavigator = () => {
         />
         <Tab.Screen name="Today" component={TodayScreen}
          options={() =>({
-            title: 'Lịch',
+            title: 'Hôm nay',
             tabBarIcon:({color})=> <Icons name="calendar" color={color}/>,
             headerShown: false
         })
         }
         />
+        <Tab.Screen
+        name="Settings"
+        component={TaskCalendarScreen}
+        options={() => ({
+          title: "Lịch",
+          tabBarIcon: ({ color }) => <Icons name="completed"  color={color} />,
+          headerShown: false,
+        })}
+      />
         <Tab.Screen name="Completed" component={CompletedScreen}
         options={() =>({
             title: 'Lịch sử',

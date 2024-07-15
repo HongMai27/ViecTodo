@@ -1,191 +1,108 @@
-import React, { useEffect, useState } from 'react';
-import {Alert, Image, Pressable, ScrollView,StyleSheet,TextInput,View,ViewBase,} from "react-native";
-import SafeAreaWrapper from '../../components/shared/safe-area-wrapper';
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, Image, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { ZoomInEasyDown } from "react-native-reanimated";
+
+import useSWR from "swr";
+import { getGreeting } from "../../utils/helpers";
+import useUserGlobalStore from "../../store/useUserGlobalStore";
+import { ITask } from "../../types";
+import { fetcher, removeToken } from "../../services/config";
+import Loader from "../../components/shared/loader";
+import SafeAreaWrapper from "../../components/shared/safe-area-wrapper";
+import { AnimatedText, Box, Text } from "../../utils/theme";
+import Task from "../../components/tasks/task";
+import { format } from "date-fns-tz";
+import TaskActions from "../../components/tasks/task-action";
+import TaskBink from "../../components/tasks/task";
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { Button } from 'react-native'
-import { Box, Text } from '../../utils/theme'
-import { useNavigation } from '@react-navigation/native'
-import { AuthScreenNavigationType, HomeScreenNavigationType } from '../../navigation/types'
 import { BottomModal, ModalContent, ModalTitle, SlideAnimation, ModalPortal } from 'react-native-modals';
-import useSWR from 'swr'
-import axiosInstance, { TOKEN_NAME, fetcher } from '../../services/config'
-import { SearchBar } from 'react-native-screens';
-import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
-import { ICategory, ITask } from '../../types';
-import Loader from '../../components/shared/loader';
-import Task from '../../components/tasks/task';
-import useUserGlobalStore from '../../store/useUserGlobalStore';
-import {  removeToken } from '../../services/config'
-import DateTimePicker from 'react-native-modal-datetime-picker';
-import { Dropdown } from 'react-native-element-dropdown';
-import { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import moment from 'moment';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
-import TaskActions from '../../components/tasks/task-action';
 
-const HomeScreen: React.FC = () => {
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [taskName, setTaskName] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStartDate, setSelectedStartDate] = useState('');
-  const [selectedEndDate, setSelectedEndDate] = useState('');
+const today = new Date();
+const greeting = getGreeting({ hour: new Date().getHours() });
 
-  const [isModalVisible, setModalVisible] = useState(false);
-
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  const [filteredTasks, setFilteredTasks] = useState<ITask[]>([]);
-  const [toDo, setTodo] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [deadline, setDeadline] = useState<Date>(new Date());
-  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [category, setCategory] = useState<string | null>(null);
+const HomeScreen = () => {
   const { user } = useUserGlobalStore();
-  const { data, error, isLoading, mutate } = useSWR<ITask[]>('tasks/', fetcher, {
-    refreshInterval: 1000,
-  });
-  const { data: categories, error: categoriesError, isLoading: isCategoriesLoading } = useSWR<ICategory[]>('categories/', fetcher);
-    //Search
-    
-    useEffect(() => {
-      if (data) {
-        setFilteredTasks(data.filter(task => task.name.toLowerCase().includes(searchQuery.toLowerCase())));
-      }
-    }, [data, searchQuery]);
-    const handleSearchChange = (text: string) => {
-      setSearchQuery(text);
-    };
-
-    const handleCreate = async () => {
-      try {
-        const token = await AsyncStorage.getItem(TOKEN_NAME);
-        if (!token) {
-          Alert.alert('Lỗi', 'Không tìm thấy token xác thực.');
-          return;
-        }
-    
-        const newTaskData = {
-          name: taskName, 
-          categoryId: categories.find(cat => cat.name === selectedCategory)?._id,
-          date: selectedEndDate, 
-        };
-    
-        const response = await axiosInstance.post('/tasks/create', newTaskData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-    
-        console.log('Phản hồi từ server:', response.data);
-        // Xử lý kết quả từ server sau khi thành công
-      } catch (error) {
-        console.error('Lỗi khi tạo task:', error.response?.data); // In ra lỗi từ server nếu có
-        Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo task. Vui lòng thử lại sau.');
-      }
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredTasks, setFilteredTasks] = useState<ITask[]>([]);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const {
+    data: tasks,
+    isLoading,
+    mutate: mutateTasks,
+  } = useSWR<ITask[]>("tasks/", fetcher,
+    {
+      refreshInterval: 1000,
     }
-    
-    const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date | undefined) => {
-      const currentDate = selectedDate || deadline;
-      setShowDatePicker(false);
-      setDeadline(currentDate);
-    };
-    const logout = async () => {
-      const { updateUser } = useUserGlobalStore.getState();
-      Alert.alert(
-        'Đăng xuất',
-        'Bạn có chắc muốn đăng xuất?',
-        [
-          {
-            text: 'Hủy',
-            style: 'cancel',
-          },
-          {
-            text: 'Đăng xuất',
-            onPress: async () => {
-              try {
-                await removeToken();  
-                updateUser(null);  
-                console.log('Đã đăng xuất thành công');
-              } catch (error) {
-                console.error('Error logging out:', error);
-              }
+  );
+  useEffect(() => {
+    if (tasks) {
+      setFilteredTasks(tasks.filter(task => task.name.toLowerCase().includes(searchQuery.toLowerCase())));
+    }
+  }, [tasks, searchQuery]);
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  const logout = async () => {
+    const { updateUser } = useUserGlobalStore.getState();
+    Alert.alert(
+      "Đăng xuất",
+      "Bạn có chắc muốn đăng xuất?",
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Đăng xuất",
+          onPress: async () => {
+            try {
+              await removeToken();
+              updateUser(null);
+              console.log("Đã đăng xuất thành công");
+            } catch (error) {
+              console.error("Error logging out:", error);
             }
-          }
-            ],
-            { cancelable: true }
-      )
-    };
-  const navigation = useNavigation<HomeScreenNavigationType>()
-    const navigationToAddTaskScreen = () => {
-        navigation.navigate('AddTask')
-    }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
-  if (isLoading) {
+  if (isLoading || !tasks) {
     return <Loader />;
   }
-  if (error) {
-    if (error.message.includes('401')) {
-      return (
-        <SafeAreaWrapper>
-          <Box flex={1} px="4" justifyContent="center" alignItems="center">
-            <Text>Lỗi xác thực. Vui lòng đăng nhập lại.</Text>
-            {/* <Button title="Login" onPress={() => {goToSignIn}} /> */}
-          </Box>
-        </SafeAreaWrapper>
-      );
-    }
-    return (
-      <SafeAreaWrapper>
-        <Box flex={1} px="4" justifyContent="center" alignItems="center">
-          <Text>Lỗi khi tải dữ liệu</Text>
-        </Box>
-      </SafeAreaWrapper>
-    );
-  }
-  
-  const renderItem = ({ item }: { item: ITask }) => (
-    <Task task={item} categories={categories} />
-  );
-    
- 
-  //FilterAll
-  const handleAll = () =>{
-    const allTasks = data ? [...data] : [];
-    setFilteredTasks(allTasks);
-    setSelectedFilter('all');
-  }
-  //FilterComplete
-  const handleComplete = () => {
-    const completedTasks = data?.filter(task => task.isCompleted);
-    setFilteredTasks(completedTasks)
-    setSelectedFilter('complete');
-  };
-  //FilterUnComplete
-  const handleUnComplete = () => {
-    const unCompletedTasks = data?.filter(task => !task.isCompleted);
-    setFilteredTasks(unCompletedTasks)
-    setSelectedFilter('uncomplete');
-  };
 
   return (
     <SafeAreaWrapper>
-      
-      <Box flexDirection="row" justifyContent="space-between" alignItems="center" paddingHorizontal="4" paddingVertical="2">
-        <View>
-          <Text style={styles.greetingText}>Hello  </Text>
-        </View>
-        <View>
+      <Box flex={1} mx="4" mt="4">
+        <Box flexDirection="row" alignItems="center" justifyContent="space-between">
+          <AnimatedText
+            variant="textXl"
+            fontWeight="500"
+            entering={ZoomInEasyDown.delay(500).duration(700)}
+          >
+             {greeting}, {''}
+            <Text color="purple1000">
+            {user?.name}
+            </Text>
+          </AnimatedText>
           <Pressable onPress={logout}>
-          <Image
-            source={{ uri: 'https://picsum.photos/200' }} // Example URI for avatar image
-            style={styles.avatar}
-          />
+            <Image
+              source={{ uri: "https://picsum.photos/200" }}
+              style={styles.avatar}
+            />
           </Pressable>
-        </View>
-      </Box>
-      <Box paddingHorizontal="4" paddingVertical="2">
-        <View style={styles.searchContainer}>
+        </Box>
+
+        <Box flexDirection="row" alignItems="center">
+          <Text variant="textLg" fontWeight="500">
+            Hôm nay, {format(today, "dd/MM/yyyy")} - {tasks.length} việc chưa làm
+          </Text>
+        </Box>
+        <Box paddingHorizontal="4" paddingVertical="2" flexDirection="row">
+        <View style={[styles.searchContainer, ]}>
           <Icon name="search" size={20} color="#888" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
@@ -194,64 +111,30 @@ const HomeScreen: React.FC = () => {
             value={searchQuery}
             onChangeText={handleSearchChange}
           />
-        </View>
-      </Box>
-      <View
-          style={{
-            marginHorizontal: 17,
-            marginVertical: 2,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 5,
-          }}
-        >
-          <Pressable 
-            onPress={handleAll}  
-            style={[
-              styles.filter,
-              selectedFilter === 'all' && styles.selectedFilter,
-          ]}>
-            <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>Tất cả</Text>
-          </Pressable>
-          <Pressable 
-            onPress={handleComplete}  
-            style={[
-              styles.filter,
-              selectedFilter === 'complete' && styles.selectedFilter,
-          ]}>
-            <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>Đã hoàn thành</Text>
-          </Pressable>
-          <Pressable 
-            onPress={handleUnComplete}  
-            style={[
-              styles.filter,
-              selectedFilter === 'uncomplete' && styles.selectedFilter,
-          ]}>
-            <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>Chưa hoàn thành</Text>
-          </Pressable>
-          <Pressable onPress={() => setModalVisible(!isModalVisible)} style={{ right: -10 }}>
+              <Pressable  onPress={() => setModalVisible(!isModalVisible)} style={{ right: -45 }}>
         <Icon name="plus-circle" size={30} color="#EB91FF" />
-      </Pressable>
-      <Box height={10} />
-      {/* Truyền trạng thái isModalVisible và hàm setModalVisible vào TaskActions */}
-      <TaskActions
+          </Pressable>
+          <TaskActions
         categoryId=""
         isModalVisible={isModalVisible}
         setModalVisible={setModalVisible}
-      />
-
+      />            
         </View>
+      </Box>
+    
         <Box height={10} />
-        <Box height={10} />
-      <Box flex={1} px="4">
-      {data.length > 0 ? (
+        {tasks.length > 0 ? (
         <FlatList
           data={filteredTasks}
-          ItemSeparatorComponent={() => <Box height={10} />}
-          keyExtractor={(item) => item._id.toString()}
-          renderItem={renderItem}
+          renderItem={({ item }) =>( 
+          <TaskBink task={item} mutateTasks={mutateTasks} />
+          )
+        }
+          ItemSeparatorComponent={() => <Box height={14} />}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item) => item._id}
         />
-      )  : ( // return when 0 task
+        )  : ( // return when 0 task
         <View
           style={{
             flex: 1,
@@ -280,46 +163,30 @@ const HomeScreen: React.FC = () => {
           </Text>
         </View>
       )}
+        
       </Box>
-     
       <ModalPortal />
     </SafeAreaWrapper>
   );
 };
+
 export default HomeScreen;
 
 const styles = StyleSheet.create({
-    greetingText: {
-    fontSize: 22, 
-    fontWeight: 'bold', 
-    marginRight: 10,
-    color:'black'
-  },
-  container: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: '#f5f5f5',
-  },
-  projectContainer: {
-    backgroundColor: 'white',
-    marginBottom: 10,
-    borderRadius: 15,
-    elevation: 3,
-    padding: 10,
-  },
   avatar: {
     width: 50,
     height: 50,
-    borderRadius: 30,
-    marginLeft: 10, 
+    borderRadius: 25,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
-    borderRadius: 10,
+    borderRadius: 50,
+    left: -20,
     paddingHorizontal: 10,
     paddingVertical: 5,
+    width: 350
   },
   searchIcon: {
     marginRight: 10,
@@ -327,62 +194,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
+    
   },
-  filter:{
-    backgroundColor: "#EB91FF",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  selectedFilter: {
-    backgroundColor: '#DB3AFF', 
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  datePickerButton: {
-    padding: 10,
-    borderColor: '#A1A1A1',
-    borderWidth: 1,
-    borderRadius: 5,
-    marginTop: 0,
-    alignItems: 'center',
-  },
-  dropdown: {
-    padding: 10,
-    borderColor: '#A1A1A1',
-    borderWidth: 1,
-    borderRadius: 5,
-    marginTop: 0,
-    marginLeft: 10
-  },
-  placeholderStyle: {
-    fontSize: 16,
-    color: '#A1A1A1',
-  },
-  submitButton: {
-    marginTop: 10,
-    alignItems: 'flex-end',
-  },
-  selectedTextStyle: {
-    fontSize: 16,
-  },
-  picker: {
-    borderColor: 'black', 
-    borderWidth: 2, 
-    backgroundColor: '#CCCCCC',
-    borderRadius: 10, 
-    paddingHorizontal: 10, 
-    height: 50,
-    marginBottom: 10,
-    fontSize:16,
-    textAlign:'center',
-    width: '200%',
-
-  }
 });
-

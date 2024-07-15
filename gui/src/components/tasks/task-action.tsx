@@ -85,6 +85,7 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
           name: "",
         })
         await mutate("tasks/")
+        setModalVisible(!isModalVisible)
       }
     } catch (error) {
       console.log("error in onCreateTask", error)

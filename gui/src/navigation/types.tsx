@@ -22,6 +22,7 @@ export type RootBottomTabParamList = {
   Today: undefined
   Completed: undefined
   CategoriesStack: NavigatorScreenParams<CategoriesStackParamList>
+  Settings: undefined
 }
 
 export type HomeStackParamList = {
