@@ -11,6 +11,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { IUser } from '../../types'
 import { loginUser } from '../../services/api'
 import LinearGradient from 'react-native-linear-gradient'
+import Animated, { ZoomIn } from 'react-native-reanimated'
 
 type SignInScreenProps = {
     onLoginSuccess: () => void;
@@ -22,7 +23,10 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ onLoginSuccess }) => {
         navigation.navigate('SignUp')
 
     }
+    const navigationToForgotPassScreen = () => {
+        navigation.navigate('ForgotPass')
 
+    }
     const { updateUser } = useUserGlobalStore()
     const {
         control,
@@ -35,7 +39,7 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ onLoginSuccess }) => {
         },
     })
 
-    const onSubmit = async (data: Omit<IUser, "name">) => {
+    const onSubmit = async (data: Omit<IUser, "name"  >) => {
         try {
             const { email, password } = data
             const _user = await loginUser({
@@ -66,11 +70,12 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ onLoginSuccess }) => {
             style={{ flex: 1 }}
             >
             <Box flex={1} px="5.5" justifyContent='center'>
-      
+            <Animated.View entering={ZoomIn.duration(2000)}>
             <Image
                     source={require('../../image/logo.png')}
                     style={{alignSelf:'center', height: 110, width:120}}
               />
+              </Animated.View>
                 <Controller
                     control={control}
                     rules={{
@@ -111,13 +116,13 @@ const SignInScreen: React.FC<SignInScreenProps> = ({ onLoginSuccess }) => {
                 />
 
                 <Box mt="5.5" />
-                <Pressable onPress={navigationToSignUpScreen}>
+                <Pressable onPress={navigationToForgotPassScreen}>
                     <Text color="purple1000" textAlign="right">
                         Quên mật khẩu?
                     </Text>
                 </Pressable>
                 <Box mb="5.5" />
-                <Button label='Login' onPress={handleSubmit(onSubmit)} uppercase />
+                <Button label='Đăng nhập' onPress={handleSubmit(onSubmit)} uppercase />
                 <Box mb="5.5" />
                 <Pressable onPress={navigationToSignUpScreen}>
                     <Text color="purple1000" textAlign="center">

@@ -7,6 +7,7 @@ import WelcomeScreen from '../screens/welcome-screen'
 import SignInScreen from '../screens/sign-in-screen'
 import SignUpScreen from '../screens/sign-up-screen'
 import HomeScreen from '../screens/home-screen'
+import ForgotPassScreen from '../screens/forgot-password-screen'
 
 
 const Stack = createStackNavigator<AuthStackParamList>()
@@ -30,6 +31,11 @@ const AuthStackNavigator = () => {
                     headerShown: false
                 }}
                 component={SignUpScreen} />
+            <Stack.Screen name='ForgotPass'
+                options={{
+                    headerShown: false
+                }}
+                component={ForgotPassScreen} />
 
         </Stack.Navigator>
     )

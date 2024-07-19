@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { ZoomInEasyDown } from "react-native-reanimated";
-
 import useSWR from "swr";
 import { getGreeting } from "../../utils/helpers";
 import useUserGlobalStore from "../../store/useUserGlobalStore";
@@ -20,7 +19,7 @@ import { BottomModal, ModalContent, ModalTitle, SlideAnimation, ModalPortal } fr
 const today = new Date();
 const greeting = getGreeting({ hour: new Date().getHours() });
 
-const HomeScreen = () => {
+const HomeScreen = ({navigation}) => {
   const { user } = useUserGlobalStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTasks, setFilteredTasks] = useState<ITask[]>([]);
@@ -43,33 +42,6 @@ const HomeScreen = () => {
     setSearchQuery(text);
   };
 
-  const logout = async () => {
-    const { updateUser } = useUserGlobalStore.getState();
-    Alert.alert(
-      "Đăng xuất",
-      "Bạn có chắc muốn đăng xuất?",
-      [
-        {
-          text: "Hủy",
-          style: "cancel",
-        },
-        {
-          text: "Đăng xuất",
-          onPress: async () => {
-            try {
-              await removeToken();
-              updateUser(null);
-              console.log("Đã đăng xuất thành công");
-            } catch (error) {
-              console.error("Error logging out:", error);
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
   if (isLoading || !tasks) {
     return <Loader />;
   }
@@ -88,7 +60,7 @@ const HomeScreen = () => {
             {user?.name}
             </Text>
           </AnimatedText>
-          <Pressable onPress={logout}>
+          <Pressable onPress={() => navigation.navigate('Profile')}>
             <Image
               source={{ uri: "https://picsum.photos/200" }}
               style={styles.avatar}
@@ -127,7 +99,7 @@ const HomeScreen = () => {
         <FlatList
           data={filteredTasks}
           renderItem={({ item }) =>( 
-          <TaskBink task={item} mutateTasks={mutateTasks} />
+          <Task task={item} mutateTasks={mutateTasks} />
           )
         }
           ItemSeparatorComponent={() => <Box height={14} />}
@@ -151,7 +123,7 @@ const HomeScreen = () => {
             }}
           />
           <Text
-            style={{fontSize: 18,marginTop: 15,fontWeight: "600",textAlign: "center",}}
+            style={{fontSize: 18,marginTop: 15,fontWeight: "600",textAlign: "center", fontFamily:'Lato'}}
           >
             Danh sách công việc đang trống
           </Text>

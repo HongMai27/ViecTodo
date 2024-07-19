@@ -8,6 +8,7 @@ import AddTaskScreen from '../screens/add-task-screen'
 import WelcomeScreen from '../screens/welcome-screen'
 import AuthStackNavigator from './auth-stack-navigator'
 import BottomTabNavigator from './bottom-tab-navigator'
+import ProfileScreen from '../screens/profile-screen'
 
 const Stack = createStackNavigator<HomeStackParamList>()
 
@@ -31,7 +32,7 @@ const HomeStackNavigator = () => {
             headerShown: false
         }}
         />
-        <Stack.Screen name="AddTask" component={AddTaskScreen}
+        <Stack.Screen name="Profile" component ={ProfileScreen}
          options={{
             headerShown: false
         }}
