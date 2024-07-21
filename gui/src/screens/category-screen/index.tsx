@@ -1,30 +1,27 @@
-import { RouteProp, useRoute } from "@react-navigation/native"
-import React, { useEffect } from "react"
-import { FlatList } from "react-native"
-import useSWR from "swr"
-import { CategoriesStackParamList } from "../../navigation/types"
-import { ICategory, ITask } from "../../types"
-import { fetcher } from "../../services/config"
-import Loader from "../../components/shared/loader"
-import SafeAreaWrapper from "../../components/shared/safe-area-wrapper"
-import { Box, Text } from "../../utils/theme"
-import NavigateBack from "../../navigation/navigate-back"
-import TaskActions from "../../components/tasks/task-action"
-import TaskBink from "../../components/tasks/task"
+import { RouteProp, useRoute } from "@react-navigation/native";
+import React from "react";
+import { FlatList, StyleSheet } from "react-native";
+import useSWR from "swr";
+import { CategoriesStackParamList } from "../../navigation/types";
+import { ICategory, ITask } from "../../types";
+import { fetcher } from "../../services/config";
+import Loader from "../../components/shared/loader";
+import SafeAreaWrapper from "../../components/shared/safe-area-wrapper";
+import { Box, Text } from "../../utils/theme";
+import Task from "../../components/tasks/task";
+import NavigateBack from "../../navigation/navigate-back";
+import TaskActions from "../../components/tasks/task-action";
 
-type CategoryScreenRouteProp = RouteProp<CategoriesStackParamList, "Category">
+type CategoryScreenRouteProp = RouteProp<CategoriesStackParamList, "Category">;
 
 const CategoryScreen = () => {
-  const route = useRoute<CategoryScreenRouteProp>()
-
-  const { id } = route.params
+  const route = useRoute<CategoryScreenRouteProp>();
+  const { id } = route.params;
 
   const { data: category, isLoading: isLoadingCategory } = useSWR<ICategory>(
     `categories/${id}`,
     fetcher
-  )
-
-  //console.log(`categories/${id}`, JSON.stringify(category, null, 2))
+  );
 
   const {
     data: tasks,
@@ -32,12 +29,10 @@ const CategoryScreen = () => {
     mutate: mutateTasks,
   } = useSWR<ITask[]>(`tasks/tasks-by-category/${id}`, fetcher, {
     refreshInterval: 1000,
-  })
-
- // console.log('Tasks data:', tasks);
+  });
 
   if (isLoadingTasks || isLoadingCategory || !category || !tasks) {
-    return <Loader />
+    return <Loader />;
   }
 
   return (
@@ -47,7 +42,7 @@ const CategoryScreen = () => {
           <NavigateBack />
         </Box>
         <Box height={16} />
-        <Box flexDirection="row">
+        <Box flexDirection="row" alignItems="center">
           <Text variant="textXl" fontWeight="700">
             {category.icon.symbol}
           </Text>
@@ -62,20 +57,29 @@ const CategoryScreen = () => {
             {category.name}
           </Text>
         </Box>
+        <Box height={8} />
+        <Text variant="textBase" fontWeight="500" color="gray600">
+          {tasks.length} {tasks.length === 1 ? "Task" : "Tasks"}
+        </Text>
         <Box height={16} />
-        <TaskActions categoryId={id} />
-        <Box height={16} />
-
         <FlatList
           data={tasks}
-          renderItem={({ item, index }) => {
-            return <TaskBink task={item} mutateTasks={mutateTasks} />
-          }}
+          renderItem={({ item }) => (
+            <Task task={item} mutateTasks={mutateTasks} />
+          )}
           ItemSeparatorComponent={() => <Box height={14} />}
         />
       </Box>
     </SafeAreaWrapper>
-  )
-}
+  );
+};
 
-export default CategoryScreen
+const styles = StyleSheet.create({
+  taskCount: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#6b7280", // Gray color for task count
+  },
+});
+
+export default CategoryScreen;

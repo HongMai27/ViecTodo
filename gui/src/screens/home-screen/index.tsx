@@ -41,11 +41,11 @@ const HomeScreen = ({navigation}) => {
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
   };
-
+  const pendingTasksCount = tasks.filter(task => !task.isCompleted).length;
   if (isLoading || !tasks) {
     return <Loader />;
   }
-
+  
   return (
     <SafeAreaWrapper>
       <Box flex={1} mx="4" mt="4">
@@ -70,7 +70,7 @@ const HomeScreen = ({navigation}) => {
 
         <Box flexDirection="row" alignItems="center">
           <Text variant="textLg" fontWeight="500">
-            Hôm nay, {format(today, "dd/MM/yyyy")} - {tasks.length} việc chưa làm
+            Hôm nay, {format(today, "dd/MM/yyyy")} - {pendingTasksCount} việc chưa làm
           </Text>
         </Box>
         <Box paddingHorizontal="4" paddingVertical="2" flexDirection="row">

@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ChangeProfilePicture from '../../components/user/change-pass';
 import { Box } from '../../utils/theme';
 import Input from '../../components/shared/input';
+import ImagePicker from 'react-native-image-crop-picker';
 
 
 const updatePasswordRequest = async (url: string, { arg }: { arg: { email: string, oldPassword: string, newPassword: string } }) => {
@@ -30,16 +31,47 @@ const updatePasswordRequest = async (url: string, { arg }: { arg: { email: strin
     console.error('Error changing password', error);
   }
 };
+const updateProfiledRequest = async (url: string, { arg }: { arg: { email: string, newName: string, newAvatar: string } }) => {
+  try {
+    const response = await axiosInstance.put(url, {
+      email: arg.email,
+      newName: arg.newName,
+      newAvatar: arg.newAvatar,
+    });
+
+    if (response.status === 200) {
+      console.log('Profile updated successfully');
+    } else {
+      console.error(response.data.message || 'Failed to update profile');
+    }
+  } catch (error) {
+    console.error('Error changing user name', error);
+  }
+};
 const Profile = () => {
   const { user } = useUserGlobalStore();
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email);
+  const [selectedAvt, setSelectedAvt] = useState(null);
+  const [newAvatar, setNewAvatar] = useState('');
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
+  const selectAvt = async () => {
+    try {
+      const image = await ImagePicker.openPicker({
+        width: 300,
+        height: 400,
+        cropping: true,
+      });
 
+      setSelectedAvt(image.path);
+    } catch (error) {
+      console.error('Error selecting image:', error);
+    }
+  };
   const logout = async () => {
     const { updateUser } = useUserGlobalStore.getState();
     Alert.alert(
@@ -82,8 +114,25 @@ const Profile = () => {
       Alert.alert('Lỗi', 'Lỗi không thể đổi mật khẩu');
     }
   };
+  const handleProfileChange = async () => {
+    try {
+      if (newName.trim().length > 0) {
+        await updateProfiledRequest('/users/update-profile', {
+          arg: { email, newName, newAvatar }
+        });
+        setIsEditingName(false);
+        Alert.alert('Thông báo', 'Tên người dùng đã được thay đổi');
+      } else {
+        Alert.alert('Lỗi', 'Vui lòng nhập thông tin');
+      }
+    } catch (error) {
+      console.error('Error password', error);
+      Alert.alert('Lỗi', 'Lỗi không thể đổi tên người dùng');
+    }
+  };
   const handleCancel = () => {
     setIsEditingPassword(false);
+    setIsEditingName(false);
   };
   return (
     
@@ -112,6 +161,34 @@ const Profile = () => {
             </Pressable>
             <Icon name="angle-right" size={24} />
           </View>
+          <Modal transparent={true} visible={isEditingName} animationType="slide"> 
+        <View style={styles.overlay}>
+          <Box style={styles.modalContent}>
+          <View style={{flexDirection:'column', width: 350, alignItems:'stretch', }}>
+              <Text style={styles.title}>Đổi tên tài khoản</Text>
+              <Box mb='4'/>
+              <Input
+                    label="Tên người dùng"
+                    placeholder="Nhập tên người dùng mới"
+                    value={newName}
+                    onChangeText={setNewName}
+              />
+              <Box mb='6'/>
+              <Pressable  onPress={selectAvt}>
+              <Text>Chọn hình ảnh</Text>
+              </Pressable>
+              <View style={{flexDirection:'row', alignSelf:'center',justifyContent:'space-between', width: 350 }}>
+                <Pressable onPress={handleCancel}>
+                  <Text style={[styles.button, {color: '#EB91FF', backgroundColor: 'white'}]}>Hủy</Text>
+                </Pressable>
+                <Pressable onPress={handleProfileChange}>
+                  <Text style={styles.button}>Lưu</Text>
+                </Pressable>
+              </View>
+            </View> 
+          </Box>
+        </View>
+      </Modal>
        
           <View style={styles.box}>
             <View style={{ flexDirection: 'row' }}>
@@ -131,12 +208,13 @@ const Profile = () => {
             </Pressable>
             <Icon name="angle-right" size={24} />
           </View>
-          <Modal transparent={true} visible={isEditingPassword} animationType="slide">
+     
+      <Modal transparent={true} visible={isEditingPassword} animationType="slide"> 
         <View style={styles.overlay}>
           <Box style={styles.modalContent}>
           <View style={{flexDirection:'column', width: 350, alignItems:'stretch'}}>
               <Text style={styles.title}>Đổi mật khẩu</Text>
-             
+              <Box mb='4'/>
               <Input
                     label="Mật khẩu cũ"
                     placeholder="Nhập mật khẩu cũ"
@@ -152,17 +230,16 @@ const Profile = () => {
                     onChangeText={setNewPassword}
                     secureTextEntry
               />
-              <Box mb='4'/>
-              <View style={{flexDirection:'row', alignSelf:'center', }}>
+              <Box mb='6'/>
+              <View style={{flexDirection:'row', alignSelf:'center', justifyContent:'space-between', width: 350 }}>
                 <Pressable onPress={handleCancel}>
-                  <Text style={[styles.button, {color: 'red', backgroundColor: '#DDDDDD'}]}>Hủy</Text>
+                  <Text style={[styles.button, {color: '#EB91FF', backgroundColor: 'white'}]}>Hủy</Text>
                 </Pressable>
                 <Pressable onPress={handlePasswordChange}>
                   <Text style={styles.button}>Lưu</Text>
                 </Pressable>
               </View>
-            </View>
-            
+            </View> 
           </Box>
         </View>
       </Modal>
@@ -229,7 +306,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     padding: 10,
     borderRadius: 5,
-    fontSize: 16
+    fontSize: 20,
+    width: 170,
+    height: 60,
+    textAlign: 'center',
+  },
+  selectImageButton: {
+    backgroundColor: '#EB91FF',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+    
   },
 });
 
