@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import useSWR from 'swr';
-import { IUser } from '../../types';
+import { ITask, IUser } from '../../types';
 import axiosInstance, { fetcher, removeToken } from '../../services/config';
 import useUserGlobalStore from '../../store/useUserGlobalStore';
 import NavigateBack from '../../navigation/navigate-back';
@@ -12,6 +12,7 @@ import ChangeProfilePicture from '../../components/user/change-pass';
 import { Box } from '../../utils/theme';
 import Input from '../../components/shared/input';
 import ImagePicker from 'react-native-image-crop-picker';
+import SafeAreaWrapper from '../../components/shared/safe-area-wrapper';
 
 
 const updatePasswordRequest = async (url: string, { arg }: { arg: { email: string, oldPassword: string, newPassword: string } }) => {
@@ -51,14 +52,22 @@ const updateProfiledRequest = async (url: string, { arg }: { arg: { email: strin
 const Profile = () => {
   const { user } = useUserGlobalStore();
   const [isEditingName, setIsEditingName] = useState(false);
-  const [newName, setNewName] = useState(user?.name || '');
+  const [newName, setNewName] = useState('');
   const [email, setEmail] = useState(user?.email);
   const [selectedAvt, setSelectedAvt] = useState(null);
   const [newAvatar, setNewAvatar] = useState('');
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-
+  const { data: tasks, isLoading, mutate: mutateTasks } = useSWR<ITask[]>("tasks/", fetcher, {
+    refreshInterval: 1000,
+  });
+  const [reload, setReload] = useState(false);
+  const reloadPage = () => {
+    setReload(!reload)
+  }
+  const pendingTasksCount = tasks?.filter(task => !task.isCompleted).length ?? 0;
+  const unCompletedTask = tasks.length - pendingTasksCount;
   const selectAvt = async () => {
     try {
       const image = await ImagePicker.openPicker({
@@ -115,13 +124,17 @@ const Profile = () => {
     }
   };
   const handleProfileChange = async () => {
+    const { updateUser } = useUserGlobalStore.getState();
     try {
       if (newName.trim().length > 0) {
         await updateProfiledRequest('/users/update-profile', {
           arg: { email, newName, newAvatar }
         });
         setIsEditingName(false);
+        updateUser({ ...user, name: newName } as any);
+        reloadPage();
         Alert.alert('Thông báo', 'Tên người dùng đã được thay đổi');
+
       } else {
         Alert.alert('Lỗi', 'Vui lòng nhập thông tin');
       }
@@ -135,12 +148,12 @@ const Profile = () => {
     setIsEditingName(false);
   };
   return (
-    
-    <SafeAreaView>
+    <SafeAreaWrapper>
     <NavigateBack/>
       <Pressable onPress={() => setIsEditingName(false)}>
       </Pressable>
       <View style={styles.container}>
+       
         <Pressable>
           <Image
             source={{ uri: "https://picsum.photos/200" }}
@@ -150,7 +163,11 @@ const Profile = () => {
         <Text style={[styles.title, { textAlign: 'center', marginBottom: 20 }]}>
           {user?.name}
         </Text>
-
+        <View style={{flexDirection:'row', alignSelf:'center', justifyContent:'space-between', width: 350 }}>
+          <Text style={[styles.button, {color: 'black', backgroundColor: '#fca5a5', fontSize:16}]}> {pendingTasksCount} Chưa hoàn thành</Text>
+          <Text style={[styles.button, {color:'black', backgroundColor:'#bbf7d0', fontSize:16}]}>{unCompletedTask} Đã hoàn thành</Text>
+        </View>
+        <Box mb="6" />
         <View>
           <View style={styles.box}>
             <Pressable onPress={() => setIsEditingName(true)}>
@@ -169,7 +186,7 @@ const Profile = () => {
               <Box mb='4'/>
               <Input
                     label="Tên người dùng"
-                    placeholder="Nhập tên người dùng mới"
+                    placeholder={user.name}
                     value={newName}
                     onChangeText={setNewName}
               />
@@ -254,7 +271,7 @@ const Profile = () => {
           </View>
         </View>
       </View>
-    </SafeAreaView>
+    </SafeAreaWrapper>
   );
 };
 
@@ -308,7 +325,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     fontSize: 20,
     width: 170,
-    height: 60,
+    height: 50,
     textAlign: 'center',
   },
   selectImageButton: {
