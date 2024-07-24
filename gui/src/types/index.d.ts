@@ -2,6 +2,7 @@ interface IUser {
     email: string
     name: string
     password: string
+    avatar: string
   }
   
   interface IAuthenticatedUser {
@@ -47,6 +48,7 @@ interface IUser {
     categoryId: string
     createdAt: string
     date: string
+    description: string
   }
   
   interface ITaskRequest {
@@ -54,5 +56,6 @@ interface IUser {
     isCompleted: boolean
     categoryId: string
     date: string
+    description: string
   }
   

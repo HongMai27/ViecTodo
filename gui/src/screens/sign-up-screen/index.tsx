@@ -1,4 +1,4 @@
-import { Pressable, View, Alert, TouchableOpacity } from 'react-native';
+import { Pressable, View, Alert, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
 import { Box, Text } from '../../utils/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -11,16 +11,31 @@ import { IUser } from '../../types';
 import { registerUser } from '../../services/api';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import ImagePicker from 'react-native-image-crop-picker';
+import NavigateBack from '../../navigation/navigate-back';
+
 
 const SignUpScreen = () => {
     const navigation = useNavigation<AuthScreenNavigationType<"SignUp">>();
     const navigationToSignInScreen = () => {
         navigation.navigate('SignIn');
     };
-
+    const [selectedAvt, setSelectedAvt] = useState(null);
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-
+    const selectAvt = async () => {
+        try {
+          const image = await ImagePicker.openPicker({
+            width: 300,
+            height: 400,
+            cropping: true,
+          });
+    
+          setSelectedAvt(image.path);
+        } catch (error) {
+          console.error('Error selecting image:', error);
+        }
+      };
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
@@ -28,7 +43,7 @@ const SignUpScreen = () => {
     const toggleConfirmPasswordVisibility = () => {
         setConfirmPasswordVisible(!confirmPasswordVisible);
     };
-
+    
     const {
         control,
         handleSubmit,
@@ -40,12 +55,13 @@ const SignUpScreen = () => {
             name: "",
             password: "",
             confirmPassword: "",
+            avatar:'',
         },
     });
 
     const onSubmit = async (data: IUser & { confirmPassword: string }) => {
         try {
-            const { email, name, password, confirmPassword } = data;
+            const { email, name, password, confirmPassword, avatar } = data;
 
             if (password !== confirmPassword) {
                 Alert.alert('Lỗi', 'Mật khẩu không khớp. Vui lòng kiểm tra lại.');
@@ -56,6 +72,7 @@ const SignUpScreen = () => {
                 email,
                 name,
                 password,
+                avatar,
             });
             Alert.alert(
                 'Thành công',
@@ -76,6 +93,7 @@ const SignUpScreen = () => {
 
     return (
         <SafeAreaWrapper>
+            <NavigateBack/>
             <LinearGradient
                 colors={[
                     "#ffffff",
@@ -86,12 +104,13 @@ const SignUpScreen = () => {
                     "#ffffff",
                 ]}
                 style={{ flex: 1 }}
-            >
-                <Box flex={1} px="5.5" mt={"2"}>
-                    <Text variant="textXl" fontWeight="700" mb="6" style={{ textAlign: 'center' }}>
-                        Đăng Ký
-                    </Text>
-                    <Box mb='6' />
+            >               
+                <Box  px="5.5" >
+                <Pressable onPress={selectAvt} style={{alignItems:'center'}}>
+                {selectedAvt && <Image source={{ uri: selectedAvt }} style={styles.avatar} />}
+                    <Text style={{color:'#EB91FF', fontWeight:'bold'}}>Chọn ảnh</Text>
+                 
+                </Pressable>
                     <Controller
                         control={control}
                         rules={{
@@ -155,7 +174,7 @@ const SignUpScreen = () => {
                                 top: 35,
                             }}
                         >
-                            <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={20} color="gray" />
+                            <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={20} color="gray" style={{top: 10}} />
                         </TouchableOpacity>
                     </View>
                     <Box mb="6" />
@@ -186,9 +205,10 @@ const SignUpScreen = () => {
                                 position: 'absolute',
                                 right: 10,
                                 top: 35,
+
                             }}
                         >
-                            <Icon name={confirmPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="gray" />
+                            <Icon name={confirmPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="gray" style={{ top: 10}} />
                         </TouchableOpacity>
                     </View>
                     <Box mb="10" />
@@ -206,3 +226,11 @@ const SignUpScreen = () => {
 };
 
 export default SignUpScreen;
+
+const styles = StyleSheet.create({
+    avatar: {
+        width: 70,
+        height: 70,
+        borderRadius: 50,
+      },
+})

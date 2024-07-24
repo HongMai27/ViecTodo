@@ -1,6 +1,6 @@
 import { format, isToday } from "date-fns"
 import React, { useState } from "react"
-import { FlatList, Modal, Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native"
+import { FlatList, Modal, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native"
 import { Calendar } from "react-native-calendars"
 import useSWR, { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
@@ -13,6 +13,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { Picker } from "@react-native-picker/picker"
 import { Dropdown } from "react-native-element-dropdown"
 import Button from "../shared/button"
+import Icons from "../shared/icons"
 
 
 type TaskActionsProps = {
@@ -49,6 +50,7 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
     date: todaysISODate.toISOString(),
     isCompleted: false,
     name: "",
+    description: '',
   })
 
   const { data, trigger } = useSWRMutation("tasks/create", createTaskRequest)
@@ -70,7 +72,7 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
     value: category._id,
   }));
 
-
+  
   const onCreateTask = async () => {
     try {
       if (newTask.name.length.toString().trim().length > 0) {
@@ -83,9 +85,11 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
           isCompleted: false,
           date: todaysISODate.toISOString(),
           name: "",
+          description: "",
         })
         await mutate("tasks/")
         setModalVisible(!isModalVisible)
+        console.log('Đã thêm task')
       }
     } catch (error) {
       console.log("error in onCreateTask", error)
@@ -98,7 +102,7 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
       onSwipeOut={() => setModalVisible(!isModalVisible)}
       swipeDirection={["up", "down"]}
       swipeThreshold={200}
-      modalTitle={<ModalTitle title="Thêm công việc cần làm mới" />}
+      modalTitle={<ModalTitle title="Thêm công việc cần làm" />}
       modalAnimation={
         new SlideAnimation({
           slideFrom: "bottom",
@@ -107,8 +111,9 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
       visible={isModalVisible}
       onTouchOutside={() => setModalVisible(!isModalVisible)}
     >
-      <ModalContent style={{ width: "100%", height: 230 }}>
-        <View style={{ marginVertical: 10, justifyContent:'space-around' }}>
+      <ScrollView>
+      <ModalContent style={{ width: "100%", height: 400 }}>
+        <View style={{ marginVertical: 10, justifyContent:'space-around', padding: 2}}>
           <TextInput
             placeholder='Tên công việc'
             value={newTask.name}
@@ -122,18 +127,32 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
             }}
             style={styles.textInput}
           />
-    <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'space-around', marginVertical: 10}}>
-          <Pressable onPress={() => {
-              setIsSelectingDate((prev) => !prev)
-            }}>
-             <Text style={[styles.textInput, {width:160}]}>
+          <Box mb="4" />
+          <TextInput
+            placeholder='Mô tả'
+            value={newTask.description}
+            onChangeText={(text) => {
+              setNewTask((prev) => {
+                return {
+                  ...prev,
+                  description: text,
+                };
+              });
+            }}
+            style={[styles.textInput, { height: 150, textAlignVertical: 'top' }]}
+            multiline={true}
+            numberOfLines={4}
+          />
+           <View style={styles.dateCategoryContainer}>
+            <Pressable onPress={() => setIsSelectingDate((prev) => !prev)} style={styles.datePickerButton}>
+              <Text style={styles.datePickerText}>
                 {isToday(new Date(newTask.date))
-                  ? "Today"
-                  : format(new Date(newTask.date), "MMM-dd")}
+                  ? "Hôm nay"
+                  : format(new Date(newTask.date), "dd/MM/yyyy")}
               </Text>
-          </Pressable>
-          <Dropdown
-              style={[styles.dropdown]}
+            </Pressable>
+            <Dropdown
+              style={styles.dropdown}
               placeholderStyle={styles.placeholderStyle}
               selectedTextStyle={styles.selectedTextStyle}
               data={dropdownItems}
@@ -146,32 +165,48 @@ const TaskActions = ({ categoryId, isModalVisible, setModalVisible }: TaskAction
                 setNewTask(prev => ({ ...prev, categoryId: item.value }));
               }}
             />
+
+
           </View>
-          <Button  label='Thêm' onPress={onCreateTask}/>
+          <Button label='Thêm' onPress={onCreateTask} />
         </View>
-       
-         {isSelectingDate && (
-        <Modal transparent={true}  animationType="slide">
-        <View style={styles.overlay}>
-          <Box style={styles.modalContent}>
-          <Calendar
-            minDate={format(today, "y-MM-dd")}
-            onDayPress={(day: { dateString: string | number | Date }) => {
-              setIsSelectingDate(false)
-              const selectedDate = new Date(day.dateString).toISOString()
-              setNewTask((prev) => {
-                return {
-                  ...prev,
-                  date: selectedDate,
-                }
-              })
-            }}
-          />
-        </Box>
-        </View>
+
+        {isSelectingDate && (
+          <Modal transparent={true} animationType="slide">
+            <TouchableWithoutFeedback onPress={() => setIsSelectingDate(false)}>
+            <View style={styles.overlay}>
+              <Box style={styles.modalContent}>
+                <Calendar
+                  minDate={format(today, "y-MM-dd")}
+                  theme={{
+                    calendarBackground: 'white',
+                    textSectionTitleColor: '#DB3AFF',
+                    selectedDayBackgroundColor: '#DB3AFF',
+                    selectedDayTextColor: 'white',
+                    todayTextColor: '#DB3AFF',
+                    dayTextColor: 'black',
+                    dotColor: '#DB3AFF',
+                    selectedDotColor: 'white',
+                    arrowColor: '#DB3AFF',
+                  }}
+                  onDayPress={(day: { dateString: string | number | Date }) => {
+                    setIsSelectingDate(false);
+                    const selectedDate = new Date(day.dateString).toISOString();
+                    setNewTask((prev) => {
+                      return {
+                        ...prev,
+                        date: selectedDate,
+                      };
+                    });
+                  }}
+                />
+              </Box>
+            </View>
+            </TouchableWithoutFeedback>
       </Modal>
       )}
       </ModalContent>
+      </ScrollView>
     </BottomModal>
   )
 }
@@ -192,22 +227,41 @@ const styles = StyleSheet.create ({
     justifyContent: 'center',
   },
   textInput: {
-    padding: 10, 
-    borderColor: "#A1A1A1", 
-    borderWidth: 1, 
-    borderRadius: 5
-  },
-
-  dropdown: {
-    height: 40,
-    width: 200,
-    borderColor: "#A1A1A1",
+    padding: 10,
+    borderColor: "#d946e9",
     borderWidth: 1,
     borderRadius: 5,
+    marginBottom: 0,
+  },
+  dateCategoryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginVertical: 5,
+  },
+  datePickerButton: {
+    padding: 10,
+    borderColor: "#d946e9",
+    borderWidth: 1,
+    borderRadius: 5,
+    width: '49%',
+    height: 45,
+  },
+  datePickerText: {
+    color: '#a1a1a1',
+  },
+  dropdown: {
+    height: 45,
+    width: '48%',
+    borderColor: "#d946e9",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginVertical: 10,
+    padding: 10,
   },
   placeholderStyle: {
     color: '#A1A1A1',
+    fontSize: 16,
   },
   selectedTextStyle: {
     color: '#000',

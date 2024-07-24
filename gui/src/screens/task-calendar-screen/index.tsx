@@ -17,7 +17,7 @@ const TaskCalendarScreen = () => {
     data: tasks,
     isLoading: isLoadingTasks,
     mutate: mutateTasks,
-  } = useSWR<ITask[]>(`tasks/unfinished`, fetcher, {
+  } = useSWR<ITask[]>(`tasks/`, fetcher, {
     refreshInterval: 5000,
   });
 
@@ -60,26 +60,26 @@ const TaskCalendarScreen = () => {
         <Box mb="4">
           <View style={styles.calendarContainer}>
             <Calendar
-              current={format(new Date(), "yyyy-MM-dd")}
+              current={format(new Date(), "dd/MM/yyyy")}
               onDayPress={handleDayPress}
               markedDates={markedDates}
               theme={{
                 calendarBackground: 'white',
-                textSectionTitleColor: 'blue',
-                selectedDayBackgroundColor: 'blue',
+                textSectionTitleColor: '#DB3AFF',
+                selectedDayBackgroundColor: '#DB3AFF',
                 selectedDayTextColor: 'white',
-                todayTextColor: 'blue',
+                todayTextColor: '#DB3AFF',
                 dayTextColor: 'black',
-                dotColor: 'blue',
+                dotColor: '#DB3AFF',
                 selectedDotColor: 'white',
-                arrowColor: 'blue',
+                arrowColor: '#DB3AFF',
               }}
             />
           </View>
         </Box>
 
         <Text variant="textLg" fontWeight="500" ml="3" mb="4">
-          Tasks for {format(parseISO(selectedDate), "MMMM dd, yyyy")}
+          Công việc của {format(parseISO(selectedDate), "dd/MM/yyyy")}
         </Text>
 
         <FlatList

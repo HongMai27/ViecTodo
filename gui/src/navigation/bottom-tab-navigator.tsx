@@ -28,8 +28,8 @@ const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: theme.colors.pink500,
-        tabBarInactiveTintColor: theme.colors.gray550,
+        tabBarActiveTintColor: theme.colors.purple1000,
+        tabBarInactiveTintColor: theme.colors.gray400,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarIcon: ({ color }) => {
@@ -91,7 +91,7 @@ const BottomTabNavigator = () => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#fdf2f8',
+    backgroundColor: '#ffffff',
     borderTopWidth: 0,
     elevation: 2,
     shadowColor: '#000',

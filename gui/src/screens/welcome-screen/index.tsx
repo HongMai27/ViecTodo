@@ -7,6 +7,7 @@ import { AuthScreenNavigationType } from '../../navigation/types'
 import SafeAreaWrapper from '../../components/shared/safe-area-wrapper'
 import LinearGradient from 'react-native-linear-gradient'
 import Button from '../../components/shared/button'
+import Animated, { ZoomIn } from 'react-native-reanimated'
 
 
 const WelcomeScreen = () => {
@@ -34,10 +35,12 @@ const WelcomeScreen = () => {
             >
         <Box flex={1} justifyContent="center">
             <Box alignItems='center' mb="3.5">
+            <Animated.View entering={ZoomIn.duration(2000)}>
             <Image
                     source={require('../../image/logo.png')}
 
               />
+              </Animated.View>
             </Box>
             <Box my="3.5" mx="10">
             <Button

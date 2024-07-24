@@ -10,7 +10,7 @@ type InputProps = {
 const Input = ({ label, error, ...props }: InputProps) => {
   return (
     <Box flexDirection="column">
-      <Text variant="textXs" textTransform="capitalize" mb="3.5" >
+      <Text variant="textSm" textTransform="capitalize" mb="1" >
         {label}
       </Text>
       <TextInput

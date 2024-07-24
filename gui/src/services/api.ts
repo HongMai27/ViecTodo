@@ -9,6 +9,7 @@ export const registerUser = async ({
   email,
   name,
   password,
+  avatar,
 }: RegisterUserTypes) => {
   try {
     const response = await axiosInstance.post("/users/create", {
@@ -23,7 +24,7 @@ export const registerUser = async ({
   }
 }
 
-type LoginUserTypes = Omit<IUser, "name">
+type LoginUserTypes = Omit<IUser, "name" | "avatar">
 
 export const loginUser = async ({ email, password }: LoginUserTypes) => {
   try {

@@ -1,45 +1,78 @@
-import { Pressable } from "react-native"
-import { Box, Text } from "../../utils/theme"
+import React from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import { Box, Text } from '../../utils/theme';
+import LinearGradient from 'react-native-linear-gradient';
 
 type ButtonProps = {
-  label: string
-  onPress: () => void
-  onLongPress?: () => void
-  disabled?: boolean
-  uppercase?: boolean
-  bg?: string
-}
+  label: string;
+  onPress: () => void;
+  onLongPress?: () => void;
+  disabled?: boolean;
+  uppercase?: boolean;
+};
 
 const Button = ({
   label,
-  onLongPress,
   onPress,
-  disabled,
-  uppercase,
+  onLongPress,
+  disabled = false,
+  uppercase = false,
 }: ButtonProps) => {
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress} disabled={disabled}>
-      <Box
-        bg={disabled ? "amber200" : "purple1000"}
-        py="3.5"
-        borderRadius="rounded-2xl"
-        height={60}
-        backgroundColor="purple1000"
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.buttonContainer,
+        { opacity: pressed || disabled ? 0.7 : 1 },
+      ]}
+    >
+      <LinearGradient
+        colors={['#e879f9', '#DB3AFF', '#DB3AFF', '#e879f9' ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
       >
-        <Text
-          variant="textXs"
-          fontWeight="700"
-          fontSize={18}
-          color="white"
-          textAlign="center"
-          lineHeight={30}
-          textTransform={uppercase ? "uppercase" : "none"}
-        >
-          {label}
-        </Text>
-      </Box>
+        <Box style={styles.button}>
+          <Text
+            style={[
+              styles.text,
+              { textTransform: uppercase ? 'uppercase' : 'none' },
+            ]}
+          >
+            {label}
+          </Text>
+        </Box>
+      </LinearGradient>
     </Pressable>
-  )
-}
+  );
+};
 
-export default Button
+const styles = StyleSheet.create({
+  buttonContainer: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    margin: 1,
+  },
+  gradient: {
+    borderRadius: 10,
+    padding: 1,
+  },
+  button: {
+    borderRadius: 10,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    
+    backgroundColor: 'transparent',
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'white',
+    textAlign: 'center',
+  },
+});
+
+export default Button;
