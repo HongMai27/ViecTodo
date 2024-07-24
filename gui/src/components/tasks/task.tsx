@@ -124,7 +124,7 @@ const Task = ({ task, mutateTasks }: TaskProps) => {
           }}
           >
             <Text style={[styles.dateText, {textAlign:'center'}]}>
-              {isToday(new Date(task.date)) ? "Today" : format(new Date(task.date), "dd/MM")}
+              {isToday(new Date(task.date)) ? "Hôm nay" : format(new Date(task.date), "dd/MM")}
             </Text>
           </Pressable>
         </View>

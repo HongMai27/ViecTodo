@@ -60,7 +60,7 @@ const TaskCalendarScreen = () => {
         <Box mb="4">
           <View style={styles.calendarContainer}>
             <Calendar
-              current={format(new Date(), "dd/MM/yyyy")}
+              current={format(new Date(), "yyyy-MM-dd")}
               onDayPress={handleDayPress}
               markedDates={markedDates}
               theme={{

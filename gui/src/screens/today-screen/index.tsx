@@ -49,7 +49,7 @@ const TodayScreen = () => {
         <Box height={16} />
         <Box flexDirection="row">
           <Text variant="textXl" fontWeight="700" ml="3">
-            Today
+            Danh sách công việc hôm nay
           </Text>
         </Box>
         <Box height={16} />

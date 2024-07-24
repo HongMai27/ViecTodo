@@ -42,14 +42,12 @@ const TaskCalendarComplatedScreen = () => {
 
   const handleDayPress = (day: any) => {
     setSelectedDate(day.dateString);
-    setCalendarVisible(false); // Close calendar on date selection
+    setCalendarVisible(false);
   };
 
-  // Calculate the first and last day of the current month
   const startDate = startOfMonth(new Date());
   const endDate = endOfMonth(new Date());
 
-  // Filter tasks based on the selected date and search query
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       const taskDate = parseISO(task.date);
@@ -68,14 +66,9 @@ const TaskCalendarComplatedScreen = () => {
   .sort((a, b) => {
     const dueDateA = new Date(a.date);
     const dueDateB = new Date(b.date);
-
-    // Đưa các task chưa hoàn thành lên đầu
     if (a.isCompleted !== b.isCompleted) {
       return a.isCompleted ? 1 : -1;
     }
-
-    // Sắp xếp các task chưa hoàn thành theo ngày đến hạn gần nhất
-    // và các task đã hoàn thành theo ngày đến hạn xa nhất
     return a.isCompleted
       ? dueDateB.getTime() - dueDateA.getTime() // Task đã hoàn thành: ngày đến hạn xa nhất
       : dueDateA.getTime() - dueDateB.getTime(); // Task chưa hoàn thành: ngày đến hạn gần nhất
@@ -94,16 +87,16 @@ const TaskCalendarComplatedScreen = () => {
 
         <View style={styles.headerContainer}>
           <View style={styles.searchContainer}>
-            <MaterialIcons name="search" size={24} color="#f472b6" style={styles.searchIcon} />
+            <MaterialIcons name="search" size={24} color="#DB3AFF" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Tìm kiếm công việc"
+              placeholder="Tìm kiếm công việc..."
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
           </View>
           <Pressable onPress={() => setCalendarVisible(!calendarVisible)} style={styles.iconButton}>
-            <Icon name={calendarVisible ? "chevron-up" : "chevron-down"} size={24} color="#f472b6" />
+            <Icon name={calendarVisible ? "chevron-up" : "chevron-down"} size={24} color="#DB3AFF" />
           </Pressable>
         </View>
 
@@ -116,14 +109,14 @@ const TaskCalendarComplatedScreen = () => {
               markedDates={markedDates}
               theme={{
                 calendarBackground: 'white',
-                textSectionTitleColor: 'blue',
-                selectedDayBackgroundColor: 'blue',
+                textSectionTitleColor: '#DB3AFF',
+                selectedDayBackgroundColor: '#DB3AFF',
                 selectedDayTextColor: 'white',
-                todayTextColor: 'blue',
+                todayTextColor: '#DB3AFF',
                 dayTextColor: 'black',
-                dotColor: 'blue',
+                dotColor: '#DB3AFF',
                 selectedDotColor: 'white',
-                arrowColor: 'blue',
+                arrowColor: '#DB3AFF',
               }}
             />
             </View>
